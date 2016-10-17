@@ -11,6 +11,8 @@ function usage() {
     echo "  -m : (\$DST_MAC)   destination MAC-addr"
     echo "  -t : (\$THREADS)   threads to start"
     echo "  -c : (\$SKB_CLONE) SKB clones send before alloc new SKB"
+    echo "  -C : (\$COUNT)     packets count, 0 means infinitely"
+    echo "  -D : (\$DELAY)     delay between packets, 0 means max speed"
     echo "  -b : (\$BURST)     HW level bursting of SKBs"
     echo "  -v : (\$VERBOSE)   verbose"
     echo "  -x : (\$DEBUG)     debug"
@@ -19,7 +21,7 @@ function usage() {
 
 ##  --- Parse command line arguments / parameters ---
 ## echo "Commandline options:"
-while getopts "s:i:d:m:t:c:b:vxh" option; do
+while getopts "s:i:d:m:t:c:C:D:b:vxh" option; do
     case $option in
         i) # interface
           export DEV=$OPTARG
@@ -47,6 +49,14 @@ while getopts "s:i:d:m:t:c:b:vxh" option; do
 	  export CLONE_SKB=$OPTARG
 	  info "CLONE_SKB=$CLONE_SKB"
           ;;
+        C)
+	  export COUNT=$OPTARG
+	  info "COUNT=$COUNT"
+          ;;
+        D)
+	  export DELAY=$OPTARG
+	  info "DELAY=$DELAY"
+          ;;
         b)
 	  export BURST=$OPTARG
 	  info "SKB bursting: BURST=$BURST"
@@ -65,6 +75,15 @@ while getopts "s:i:d:m:t:c:b:vxh" option; do
     esac
 done
 shift $(( $OPTIND - 1 ))
+
+# Base Config
+[ -z "$DELAY"     ] && export DELAY="0"        # Zero means max speed
+[ -z "$CLONE_SKB" ] && export CLONE_SKB="0"
+
+if [ -z "$COUNT" ]; then
+    export COUNT="100000"   # Zero means indefinitely
+    info "Packets count set to: $COUNT"
+fi
 
 if [ -z "$PKT_SIZE" ]; then
     # NIC adds 4 bytes CRC
